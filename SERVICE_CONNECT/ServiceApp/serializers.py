@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import UserProfile, EmployeeRegistration, ServiceRegistry, ServiceRequest, services, Subservices, BookingList
+from .models import UserProfile, EmployeeRegistration, ServiceRegistry, ServiceRequest, BookingList, RatingModel, Complaint
 from django.core.mail import send_mail
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -94,7 +94,7 @@ class ServiceRegistrySerializer(serializers.ModelSerializer):
 class ServiceRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceRequest
-        fields = ['service_registry','title','description','from_time','to_time']
+        fields = ['id','title','description','from_time','to_time']
         
         def create(self, validated_data):
             return ServiceRequest.objects.create(**validated_data)
@@ -103,3 +103,34 @@ class BookingListSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingList
         fields = ['id', 'customer','employee','booking_date']
+        
+class RatingSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RatingModel
+        fields = ['id','user', 'select_service', 'select_employee', 'rating']
+
+    def validate(self, data):
+        user = self.context['request'].user
+        service = data.get('select_service')
+        employee = data.get('select_employee')
+        
+        if self.instance is None:
+            existing_rating = RatingModel.objects.filter(
+                user=user,
+                select_service=service,
+                select_employee=employee,
+            ).exists()
+            
+            if existing_rating:
+                raise serializers.ValidationError("You have already rated this service/employee combination")
+            
+        return data
+    
+class ComplaintSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = Complaint
+        fields = '__all__'
+        read_only_fields = ['user','status']

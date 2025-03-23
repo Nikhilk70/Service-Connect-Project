@@ -1,7 +1,13 @@
-from django.urls import path
+from django.urls import path,include
 from .views import RegisterView, LoginView, OTPVerificationView, UserDetailsView, UserListAV,EmployeeRegisterView, EmployeeListView, ServiceListView,ServiceRequestView
-from .views import BookingListView,UserlDetailsView,ServiceRequestList,RequestDetailsView,ServiceDetailsView
+from .views import BookingListView,UserlDetailsView,ServiceRequestList,RequestDetailsView,ServiceDetailsView,RatingViewSet, ComplaintDetailsView, ComplaintListCreateView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework.routers import DefaultRouter
+
+
+router = DefaultRouter()
+router.register(r'ratings', RatingViewSet, basename='rating')
+
 
 urlpatterns = [
     path('list/', UserListAV.as_view(), name='list'),
@@ -20,4 +26,7 @@ urlpatterns = [
     path('user-details/', UserDetailsView.as_view(), name='user-details'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('', include(router.urls)),
+    path('complaint/',ComplaintListCreateView.as_view(), name='complaint_list'),
+    path('complaints/<int:pk>/', ComplaintDetailsView.as_view(), name='complaint_detail')
 ]
